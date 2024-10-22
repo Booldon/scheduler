@@ -1,0 +1,76 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a package using Gradle and then publish it to GitHub packages when a release is created
+# For more information see: https://github.com/actions/setup-java/blob/main/docs/advanced-usage.md#Publishing-using-gradle
+
+name: scheduler with CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
+        settings-path: ${{ github.workspace }} # location for the settings.xml file
+
+    ## create application-database.yml
+    - name: create application-database.yml
+      run: |        
+        ## create application-database.yml
+        cd ./src/main/resources
+
+        ## application-database.yml 파일 생성
+        touch ./application-database.yml
+
+        ## GitHub-Actions 에서 설정한 값을 application-database.yml 파일에 쓰기
+        echo "${{ secrets.DATABASE }}" >> ./application-database.yml
+
+      shell: bash
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+
+    - name: Build with Gradle
+      run: |
+        chmod +x ./gradlew
+        ./gradlew bootJar
+      
+    ## 웹 이미지 빌드 및 도커허브에 push
+    - name: web docker build and push
+      run: |
+        docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+        docker build -t ${{ secrets.DOCKER_REPO }}/scheduler-nginx:latest ./nginx
+        docker push ${{ secrets.DOCKER_REPO }}/scheduler-nginx:latest
+        docker build -t ${{ secrets.DOCKER_REPO }}/scheduler-api .
+        docker push ${{ secrets.DOCKER_REPO }}/scheduler-api
+        
+    ## docker compose up
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ubuntu
+        key: ${{ secrets.KEY }}
+        script: |
+          sudo docker rm -f $(sudo docker ps -qa)
+          sudo docker pull ${{ secrets.DOCKER_REPO }}/scheduler-nginx
+          sudo docker pull ${{ secrets.DOCKER_REPO }}/scheduler-api
+          sudo docker-compose -f scheduler/docker-compose-ec2.yml up -d
+          sudo docker image prune -f
