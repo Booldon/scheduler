@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Slf4j
@@ -23,6 +24,7 @@ public class UserService {
         log.info("password : {}",userDTO.getPassword());
         log.info("name : {}",userDTO.getName());
 
+        // email, password, name순
         User newUser = new User(userDTO.getEmail(), userDTO.getPassword(), userDTO.getName());
         return userRepository.save(newUser);
     }
@@ -42,6 +44,7 @@ public class UserService {
         user.setName(userDetails.getName());
         user.setEmail(userDetails.getEmail());
         user.setPassword(userDetails.getPassword());
+        user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
     }
 
