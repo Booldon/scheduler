@@ -69,7 +69,9 @@ jobs:
         username: ubuntu
         key: ${{ secrets.KEY }}
         script: |
-          sudo docker rm -f $(sudo docker ps -qa)
+          sudo docker rm -f $(sudo docker ps -qa --filter "name=api1")
+          sudo docker rm -f $(sudo docker ps -qa --filter "name=api2")
+          sudo docker rm -f $(sudo docker ps -qa --filter "name=nginx")
           sudo docker pull ${{ secrets.DOCKER_REPO }}/scheduler-nginx
           sudo docker pull ${{ secrets.DOCKER_REPO }}/scheduler-api
           sudo docker-compose -f scheduler/docker-compose-ec2.yml up -d
