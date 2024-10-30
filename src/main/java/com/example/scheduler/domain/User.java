@@ -26,7 +26,7 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private String name;
+    private String username;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -34,11 +34,13 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
+    private String role;
+
     // 생성자
-    public User(String email, String password, String name) {
+    public User(String email, String password, String username) {
         this.email = email;
         this.password = password;
-        this.name = name;
+        this.username = username;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
