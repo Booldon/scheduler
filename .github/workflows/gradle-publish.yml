@@ -14,6 +14,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    env:
+      JWT_SECRET: ${{secrets.JWT_SECRET}}
+      
     permissions:
       contents: read
       packages: write
@@ -58,7 +62,8 @@ jobs:
         docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
         docker build -t ${{ secrets.DOCKER_REPO }}/scheduler-nginx:latest ./nginx
         docker push ${{ secrets.DOCKER_REPO }}/scheduler-nginx:latest
-        docker build -t ${{ secrets.DOCKER_REPO }}/scheduler-api .
+        docker build --build-arg JWT_SECRET="${{env.JWT_SECRET}}" \
+          -t ${{ secrets.DOCKER_REPO }}/scheduler-api .
         docker push ${{ secrets.DOCKER_REPO }}/scheduler-api
         
     ## docker compose up
