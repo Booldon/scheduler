@@ -4,6 +4,9 @@ package com.example.scheduler.controller;
 import com.example.scheduler.DTO.UserDTO;
 import com.example.scheduler.domain.User;
 import com.example.scheduler.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +20,6 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping("/join")
-    public User createUser(@RequestBody UserDTO userDTO) {
-        return userService.createUser(userDTO);
-    }
-
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable("id") Long id) {
         Optional<User> user = userService.getUserById(id);
@@ -29,15 +27,24 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody UserDTO userDetails) {
-        User updatedUser = userService.updateUser(id, userDetails);
+    @PutMapping("/update")
+    public ResponseEntity<User> updateUser(@RequestBody UserDTO userDTO) {
+        User updatedUser = userService.updateUser(userDTO);
+
         return ResponseEntity.ok(updatedUser);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteUser(HttpServletRequest request, HttpServletResponse response) {
+
+        String username = null;
+
+        try {
+            username = userService.deleteUser();
+        }
+        catch (RuntimeException e) {
+            return ResponseEntity.internalServerError().body(e.getMessage());
+        }
+        return ResponseEntity.ok().body(username + "is deleted now");
     }
 }

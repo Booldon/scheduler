@@ -1,6 +1,7 @@
 package com.example.scheduler.jwt;
 
 import com.example.scheduler.DTO.CustomUserDetails;
+import com.example.scheduler.config.context.ResourceContext;
 import com.example.scheduler.domain.User;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -79,19 +80,12 @@ public class JWTFilter extends OncePerRequestFilter {
         //userEntity를 생성하여 값 set
         User userEntity = new User();
         userEntity.setUsername(username);
-        userEntity.setEmail("test@test1.com");
+        userEntity.setEmail("temp@email.com");
         userEntity.setPassword("temppassword"); //임의의 값 지정
         userEntity.setRole(role);
 
         //UserDetails에 회원 정보 객체에 담기
         CustomUserDetails customUserDetails = new CustomUserDetails(userEntity);
-        // 사용자 객체에서 권한을 가져옴
-        Collection<? extends GrantedAuthority> authorities = customUserDetails.getAuthorities();
-
-        // 각 권한을 출력해보는 예시
-        for (GrantedAuthority authority : authorities) {
-            System.out.println("customUserDetails.getAuthorities() : " + authority.getAuthority()); // 이때 getAuthority()가 호출됨
-        }
 
         //스프링 시큐리티 인증 토큰 생성
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
@@ -99,11 +93,18 @@ public class JWTFilter extends OncePerRequestFilter {
 
         //세션에 사용자 등록
         SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        //ResourceContext에 사용자 등록
+        ResourceContext.setUserContext(customUserDetails);
+
         System.out.println("SecurityContextHolder: " + SecurityContextHolder.getContext().getAuthentication());
         System.out.println("SecurityContextHolder Strategy: " + SecurityContextHolder.getContextHolderStrategy());
 
-
-        filterChain.doFilter(request, response);
-
+        try {
+            filterChain.doFilter(request, response);
+        }
+        finally {
+            ResourceContext.clear(); //ThreadLocal 클리어
+        }
     }
 }

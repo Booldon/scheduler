@@ -36,15 +36,6 @@ public class User {
 
     private String role;
 
-    // 생성자
-    public User(String email, String password, String username) {
-        this.email = email;
-        this.password = password;
-        this.username = username;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
     @PreUpdate
     private void preUpdateDate() {
         this.updatedAt = LocalDateTime.now();
