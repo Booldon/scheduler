@@ -1,4 +1,4 @@
 spring:
   profiles:
-    default: database
+    default: local
 #    active: local  # 기본적으로 로컬 프로파일을 활성화
